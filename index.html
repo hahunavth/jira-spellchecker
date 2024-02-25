@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Centered Text Area</title>
+  <style>
+    /* Custom CSS for centering the text area */
+    .center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh; /* Use full viewport height */
+    }
+
+    u {
+      text-decoration: underline;
+      -webkit-text-decoration-color: red; /* safari still uses vendor prefix */
+      text-decoration-color: red;
+      text-decoration-style: wavy;
+    }
+  </style>
+</head>
+<body style="background-color: #fafafa;">
+
+  <div class="container center">
+    <div class="form-control h-50" id="text-input" rows="10" contenteditable="true" spellcheck="false">
+        Since <u>emotion</u> delivery is highly related to the outcomes of speech prosody, we discuss recent work related to general prosody modeling in TTS. Prosody is a tool of human expression that is conveyed acoustically by way of durational, intensity, and frequency cues, across both linguistic and paralinguistic range of speech, while emotion is delivered by such prosodic cues embedded in the acoustic speech.
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- My script -->
+  <script>
+    var textInput = document.getElementById("text-input")
+    var text = textInput.innerText
+    var words = text.split(" ")
+    var mispelledWord = words[0]
+    if (mispelledWord) {
+        textInput.innerHTML = textInput.innerText.replace("Since", "<u>Since</u>")
+    }
+  </script>
+</body>
+</html>
