@@ -19,12 +19,15 @@ document.addEventListener("DOMContentLoaded", function () {
   paragraph.innerHTML = words.join(" ");
 });
 
+const dictionary = new Typo("en_US", null, null, { dictionaryPath: './assets/dictionaries' })
+
 function getSuggestedWords(word) {
-  var dictionary = {
-    sampl: ["sample", "simple", "sampled"],
-    paragrap: ["paragraph", "parade", "parapet"],
-  };
-  return dictionary[word.toLowerCase()] || [];
+  const isCorrect = dictionary.check(word)
+  // console.log(word, isCorrect, dictionary.suggest(word).map(w => w.toLowerCase().trim()))
+  if(!isCorrect)
+    return dictionary.suggest(word).map(w => w.toLowerCase().trim())
+  else
+    return []
 }
 
 

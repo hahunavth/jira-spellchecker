@@ -10,7 +10,7 @@
     </style>
   </head>
   <body>
-    <p id="text">
+    <p id="text" contenteditable="true" spellcheck="false">
       This is a <span class="error" onclick="showPopup(this)">sampl</span>
       <span class="error" onclick="showPopup(this)">paragrap</span> with some
       spelling mistakes. 
@@ -19,8 +19,7 @@
     <div id="popup" class="popup"></div>
 
     <div id="list"></div>
- 
-
+    <script src="https://cdn.jsdelivr.net/npm/typo-js@1.2.4/typo.min.js"></script>
     <script src="javascript.js"></script>
   </body>
 </html>
