@@ -1,0 +1,53 @@
+.error {
+  text-decoration: underline;
+  text-decoration-color: red;
+  cursor: pointer;
+  text-decoration-style: wavy;
+  text-decoration-thickness: 1px;
+  position: relative;
+}
+
+.popup {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  z-index: 1;
+  display: none;
+  border-radius: 10px;
+  margin: 5px;
+}
+
+.close-btn {
+  cursor: pointer;
+  float: right;
+}
+
+.navigation {
+  cursor: pointer;
+}
+.wrongWord {
+  font-size: 16px;
+  font-weight: bold;
+}
+.ignoreBtn {
+}
+.confirmBtn {
+    background-color: #1749AD;
+    color: #fff;
+}
+ul,
+li,
+p {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+button {
+  background-color: #fff;
+  border-radius: 5px;
+  padding: 3px 10px;
+  margin: 5px 10px;
+  outline: none;
+  border-color: #D0D5DD;
+}
