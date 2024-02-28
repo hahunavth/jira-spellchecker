@@ -6,6 +6,14 @@
   text-decoration-thickness: 1px;
   position: relative;
 }
+input .error {
+  text-decoration: underline;
+  text-decoration-color: red;
+  cursor: pointer;
+  text-decoration-style: wavy;
+  text-decoration-thickness: 1px;
+  position: relative;
+}
 
 .popup {
   position: absolute;

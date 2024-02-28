@@ -1,5 +1,4 @@
 var wordSuggestions = {}; //  lưu trữ danh sách gợi ý
-
 document.addEventListener("DOMContentLoaded", function () {
   var paragraph = document.getElementById("text");
   var words = paragraph.innerText.split(" ");
@@ -18,12 +17,63 @@ document.addEventListener("DOMContentLoaded", function () {
   paragraph.innerHTML = words.join(" ");
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+  var paragraph = document.getElementById("text");
+
+  paragraph.addEventListener("input", function() {
+    var textContent = paragraph.innerText;
+    var words = textContent.split(" ");
+    var lastWord = words[words.length - 1]; // Lấy từ cuối cùng trong mảng từ
+    console.log(lastWord)
+
+    // Kiểm tra chính tả của từ cuối cùng
+    checkWordSpelling(lastWord);
+  });
+});
+
+function checkWordSpelling(word) { 
+  
+  var is_spelled_correctly = dictionary.check(word);
+  
+
+  if (!is_spelled_correctly && /^[a-zA-Z]+$/.test(word)) {
+    wordSuggestions[word.toLowerCase()] = getSuggestedWords(word); // Lưu danh sách từ gợi ý cho từng từ
+    console.log(wordSuggestions)
+    if (wordSuggestions[word.toLowerCase()].length > 0) {
+      
+      var span = document.createElement("span");
+      span.className = "error";
+      span.textContent = word;
+      console.log(span)
+      
+    span.setAttribute(
+      "onclick",
+      "showPopup(this)"
+    );
+      // word ="<span class='error' onclick='showPopup(this)'>" + word + "</span>";
+      // console.log(word)
+      
+    //   word.setAttribute(
+    //     "onclick",
+    //     "showPopup(this)"
+    //   );
+    var paragraph = document.getElementById("text");
+    paragraph.appendChild(span);
+
+    }
+  }
+}
+
+
+const dictionary = new Typo("en_US", null, null, { dictionaryPath: './assets/dictionaries' })
+
 function getSuggestedWords(word) {
-  var dictionary = {
-    sampl: ["sample", "simple", "sampled"],
-    paragrap: ["paragraph", "parade", "parapet"],
-  };
-  return dictionary[word.toLowerCase()] || [];
+  const isCorrect = dictionary.check(word)
+  // console.log(word, isCorrect, dictionary.suggest(word).map(w => w.toLowerCase().trim()))
+  if(!isCorrect)
+    return dictionary.suggest(word).map(w => w.toLowerCase().trim())
+  else
+    return []
 }
 
 function showPopup(element) {
