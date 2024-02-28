@@ -66,6 +66,7 @@ function checkWordSpelling(word) {
 
 
 const dictionary = new Typo("en_US", null, null, { dictionaryPath: './assets/dictionaries' })
+dictionary.alphabet = 'abcdefghijklmnopqrstuvwxyz' // NOTE: hotfix case suggest 'mismismismist' (ist -> 1st)
 
 function getSuggestedWords(word) {
   const isCorrect = dictionary.check(word)

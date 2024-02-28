@@ -1,9 +1,21 @@
 var Typo = require("typo-js");
-var dictionary = new Typo("en_US", null, null, { dictionaryPath: './Spellcheck/assets/dictionaries' });
+var dictionary = new Typo( "en_US"
+, null, null, 
+//  , './Spellcheck/assets/dictionaries/en_US/en_US.aff', './Spellcheck/assets/dictionaries/en_US/en_US.dic',
+{ dictionaryPath: './Spellcheck/assets/dictionaries' }
+);
+dictionary.alphabet = 'abcdefghijklmnopqrstuvwxyz' // NOTE: hotfix case suggest 'mismismismist' (ist -> 1st)
 
-const rs = dictionary.check("a")
+// console.log(dictionary.compoundRuleCodes)
+
+const rs = dictionary.check("the")
 console.log(rs)
 
+const rs2 = dictionary.suggest("mismismismist")
+console.log(rs2)
+
+const rs3 = dictionary.suggest("abc")
+console.log(rs3)
 
 // // https://unpkg.com/dictionary-en@4.0.0/index.aff
 // // https://unpkg.com/dictionary-en@4.0.0/index.dic
