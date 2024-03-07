@@ -1,19 +1,15 @@
 var wordSuggestions = []; //  lưu trữ danh sách gợi ý
-
 document.addEventListener("DOMContentLoaded", function () {
- 
-
   document.addEventListener("keydown", function (event) {
     // Check if the pressed key is Enter or Space
     if (event.key === "Enter" || event.key === " ") {
       var paragraph = document.getElementById("text");
-      var words = paragraph.innerText.split(" ");
+      var words = paragraph.innerText.trim().split(/\s+/);
       
       for (var i = 0; i < words.length; i++) {
         var word = words[i];
-        console.log(word);
+
         var suggestions = getSuggestedWords(word); // Lấy danh sách từ gợi ý cho từ
-        console.log(suggestions)
         if (suggestions.length > 0) {
           wordSuggestions.push([word.toLowerCase(), suggestions]);
           wordSuggestions[word.toLowerCase()] = getSuggestedWords(word); // Lưu danh sách từ gợi ý cho từng từ
@@ -24,17 +20,44 @@ document.addEventListener("DOMContentLoaded", function () {
               "</span>";
           }
           
-        }
-        
-        
+        } 
       }
-     
+      console.log(paragraph)
       paragraph.innerHTML = words.join(" ");
       setCursorToEnd(paragraph);
     }
+  });
+
+
+  document.addEventListener("paste", function (event) {
     
+    event.preventDefault();
+    
+    var paragraph = document.getElementById("text");
+    var pastedText = (event.clipboardData || window.clipboardData).getData("text");
+    paragraph.appendChild(document.createTextNode(pastedText));
+    
+    var words = paragraph.innerText.trim().split(/\s+/);
+
+    for (var i = 0; i < words.length; i++) {
+      var word = words[i];
+      var suggestions = getSuggestedWords(word); // Lấy danh sách từ gợi ý cho t
+      if (suggestions.length > 0) {
+        wordSuggestions.push([word.toLowerCase(), suggestions]);
+        wordSuggestions[word.toLowerCase()] = getSuggestedWords(word); // Lưu danh sách từ gợi ý cho từng từ
+        if (wordSuggestions[word.toLowerCase()].length > 0) {
+          words[i] =
+            "<span class='error' onclick='showPopup(this)'>" +
+            word +
+            "</span>";
+        }
+      } 
+    }
+    paragraph.innerHTML = words.join(" ");
+    setCursorToEnd(paragraph);
   });
 });
+
 
 
 
@@ -83,6 +106,7 @@ function checkWordSpelling(word) {
 const dictionary = new Typo("en_US", null, null, {
   dictionaryPath: "./assets/dictionaries",
 });
+
 dictionary.alphabet = "abcdefghijklmnopqrstuvwxyz"; // NOTE: hotfix case suggest 'mismismismist' (ist -> 1st)
 
 function getSuggestedWords(word) {

@@ -1,3 +1,11 @@
+#text {
+  width: 80%;
+  margin: 20px auto;
+  padding: 10px;
+  font-size: 16px;
+  line-height: 1.5;
+  border: 1px solid #ccc;
+}
 .error {
   text-decoration: underline;
   text-decoration-color: red;
