@@ -1,3 +1,6 @@
+# Wikiworks spellchecker
+
+- Plugin files in `custom_plugins/wikiworksspellchecker`
 
 ## Install httpserver
 ```bash
