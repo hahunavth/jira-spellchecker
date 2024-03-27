@@ -1,0 +1,13 @@
+{
+  "version": "independent",
+  "npmClient": "yarn",
+  "command":  {
+    "publish": {
+      "ignoreChanges": ["modules/tinymce/**"],
+      "push": false
+    },
+    "exec": {
+      "ignore": ["*/oxide*"]
+    }
+  }
+}
