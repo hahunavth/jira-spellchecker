@@ -20,6 +20,7 @@
     const register = editor => {
 
         var started = true; // TODO: Check if editor is started before [Register events]
+        var dictionary = null;
 
         // ----------------------------------------------------------------
         // Define settings
@@ -32,6 +33,36 @@
         // TODO: suggestWords(word)
         // TODO: ignoreWord(word)
 
+        // Load dictionary
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/typo-js@1.2.4/typo.min.js';
+        script.onload = function() {
+            Promise.all([
+                fetch('https://cdn.jsdelivr.net/npm/spoken-typo-js-ts@2.0.5/dist/commonjs/dictionaries/en_US/en_US.aff').then(response => response.text()),
+                fetch('https://cdn.jsdelivr.net/npm/spoken-typo-js-ts@2.0.5/dist/commonjs/dictionaries/en_US/en_US.dic').then(response => response.text())
+            ]).then(([affData, dicData]) => {
+                dictionary = new Typo("en_US", affData, dicData);
+                dictionary.alphabet = "abcdefghijklmnopqrstuvwxyz"; // NOTE: hotfix case suggest 'mismismismist' (ist -> 1st)
+                console.debug('Dictionary loaded!', dictionary); // DEBUG
+            });
+        };
+        document.head.insertBefore(script, document.head.firstChild);
+
+        const isCorrectWord = (word) => {
+            // TODO: cache
+            return dictionary.check(word);
+        }
+
+        const suggestWords = (word) => {
+            const isCorrect = dictionary.check(word);
+            if (!isCorrect) return dictionary.suggest(word).map((w) => w.toLowerCase().trim());
+            else return [];
+        }
+
+        const ignoreWord = (word) => {
+            // TODO: cache
+        }
+
         // ----------------------------------------------------------------
         // Editor utils (UI related)
         // ----------------------------------------------------------------
@@ -42,6 +73,12 @@
         // TODO: showPopup(editor, ..)
         // TODO: hidePopup(editor, ..)
         // TODO: replaceSuggestion(editor, ..)
+
+        const getWords = (editor) => {
+            const text = editor.getContent();
+            // TODO: handle html tags
+            return text.split(' ');
+        }            
 
         // ----------------------------------------------------------------
         // Event handlers (Use Spellcheck + Editor utils)
