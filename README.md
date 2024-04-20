@@ -12,3 +12,4 @@ npm install -g httpserver
 httpserver
 ```
 - Then open http://0.0.0.0:8080
+- Set `Devtool > Networks > Disable cache`
