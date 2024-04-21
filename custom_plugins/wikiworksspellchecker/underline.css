@@ -2,3 +2,50 @@ span {
     text-decoration: underline;
     color: red;
 }
+
+  .popup-content {
+    min-width: 230px;
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    
+    padding: 10px;
+    z-index: 1;
+    display: none;
+    border-radius: 10px;
+    margin: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  .popup-control{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  
+  }
+  
+  .close-btn {
+    cursor: pointer;
+    float: right;
+  }
+  
+  .navigation {
+    cursor: pointer;
+    color: #1749AD;
+    
+    
+    
+  }
+  .suggested-words {
+    font-size: 16px;
+    /* font-weight: bold; */
+    margin: 10px 0;
+  }
+  .ignoreBtn {
+    border: 1px solid #D0D5DD ;
+    /* margin-left: 10px ; */
+    
+  }
+  .confirmBtn {
+      background-color: #1749AD;
+      color: #fff;
+  }
