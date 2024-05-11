@@ -245,6 +245,9 @@
         if (!validWordToken(matchtext)) {
           continue;
         }
+        if (ignoredWords.includes(matchtext)) {
+          continue;
+      }
         // if (typeof(suggestionscache[cleanQuotes(matchtext)]) !== 'object') {
         //     continue;
         // }
@@ -257,7 +260,12 @@
         span.setAttribute("data-mce-bogus", 1);
         span.addEventListener("click", function (event) {
           event.stopPropagation();
-          showPopup(this);
+          showPopup(
+            editor,
+            this,
+            textNode.nextElementSibling.innerHTML,
+            textNode
+          );
         });
 
         var middle = editor.getDoc().createTextNode(matchtext);
@@ -270,52 +278,103 @@
         "".match(regex); /*the magic reset button*/
       }
     }
-    function showPopup(element) {
+    var ignoredWords = [];
+    function ignoreTypo(typoWord) {
+      var parentElement = typoWord.nextElementSibling;
+
+      if (parentElement) {
+        parentElement.classList.remove("nanospell-typo");
+
+        parentElement.removeAttribute("data-mce-bogus");
+        ignoredWords.push(typoWord.nextSibling.innerText);
+      }
+    }
+    var currentPopup = null;
+
+    function showPopup(editor, element, wrongWord, textNode) {
+      // Lấy danh sách các từ gợi ý
+      console.log(wrongWord);
+      var suggestedWords = suggestWords(wrongWord);
+
+      if (currentPopup) {
+        currentPopup.style.display = "none";
+      }
+
       // Lấy kích thước và vị trí của phần tử span
       var rect = element.getBoundingClientRect();
+      var popup = editor.getDoc().createElement("div");
+      popup.classList.add("custom-popup");
 
-      var popup = document.createElement("div");
-      popup.style.position = "absolute";
-      popup.style.backgroundColor = "#ffffff";
-      popup.style.border = "1px solid #ccc";
-      popup.style.borderRadius = "5px";
-      popup.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.1)";
-      popup.style.padding = "10px";
-      popup.style.zIndex = "9999";
-
-      // Tính toán vị trí của popup dựa trên vị trí của span
       popup.style.top = rect.bottom + 175 + "px";
       popup.style.left = rect.left + "px";
 
-      // Thêm CSS inline cho các phần tử bên trong popup
-      popup.innerHTML += `
-		  <div class="popup-content" style="">
-			<span class='close-btn' style='position: absolute; top: 5px; right: 5px;padding: 5px; cursor: pointer; font-size: 16px; color: #999;'>x</span>
-			<b style="color: #333;">Did you mean:</b>
-			<ul style="list-style: none; padding: 0;">
-			  <li class="suggested-words" style="margin-top: 10px;"> Suggested words </li>
-			</ul>
-			<div class='popup-control' style="margin-top: 10px; display: flex; justify-content: space-between;align-items: center;">
-			  <div class='popup--control__left'>
-				
-				<span class='navigation' style='cursor: pointer;
-				color: #1749AD; font-weigth: bold'><</span>
-				<span class='currentIndex'>1</span>
-				<span class='navigation' style='cursor: pointer;color: #1749AD;'>></span>
-			  </div>
-			  <div class='popup--control__right' style="margin-left: 20px;">
-				<button class='ignoreBtn' style="background-color: #ccc; border: none; padding: 5px 10px; cursor: pointer;border-radius: 4px;">Ignore</button>
-				<button class='confirmBtn' style="background-color: #007bff; color: #fff; border: none; padding: 5px 10px; cursor: pointer;border-radius: 4px;">Confirm</button>
-			  </div>
-			</div>
-		  </div>`;
-      popup.querySelector(".close-btn").addEventListener("click", function () {
-        popup.style.display = "none";
-      });
+      // Hiển thị từ đầu tiên
+      var currentIndex = 0;
+      showWordAtIndex(currentIndex);
+
+      function showWordAtIndex(index) {
+        // Xóa nội dung cũ của popup
+        popup.innerHTML = "";
+
+        var popupContent = `
+              <div class="popup-content">
+              <div class="popup-header">
+              <b style="color: #333;">Did you mean:</b>
+                  <span class='close-btn'>X<i class='fas fa-times'></i></span>
+              </div>
+              
+                  
+                  <div class='word-container'>
+                      <span class='current-word'>${suggestedWords[index]}</span>
+                  </div>
+                  <div class='popup-control' >
+                      <div class='popup--control__left'>
+                        <span class='navigation__pre' ><</span>
+                        <span class ='navigation__index' >${index + 1} / ${
+          suggestedWords.length
+        }</span>
+                        <span class='navigation__next' >></span>     
+                      </div>
+                      <div class='popup--control__right'>
+                        <button class ='ignoreBtn' >Ignore</button>
+                        <button class ='confirmBtn'>Confirm</button>
+                      </div>
+                  </div>
+              </div>`;
+        popup.innerHTML = popupContent;
+
+        popup
+          .querySelector(".close-btn")
+          .addEventListener("click", function () {
+            popup.style.display = "none";
+          });
+
+        popup
+          .querySelector(".navigation__next")
+          .addEventListener("click", function () {
+            if (currentIndex < suggestedWords.length - 1) {
+              currentIndex++;
+              showWordAtIndex(currentIndex);
+            }
+          });
+        popup
+          .querySelector(".navigation__pre")
+          .addEventListener("click", function () {
+            if (currentIndex > 0) {
+              currentIndex--;
+              showWordAtIndex(currentIndex);
+            }
+          });
+        popup
+          .querySelector(".ignoreBtn")
+          .addEventListener("click", function () {
+            ignoreTypo(textNode);
+            popup.style.display = "none";
+          });
+      }
 
       popup.style.display = "block";
-
-      // Thêm popup vào body để hiển thị
+      currentPopup = popup;
       document.body.appendChild(popup);
     }
 
@@ -502,11 +561,14 @@
         cursorPos.select();
       }
     }
+  
+
     function MarkAllTypos(body) {
       var allTextNodes = FindTextNodes(body);
       for (var i = 0; i < allTextNodes.length; i++) {
-        // NOTE: i here is for each line
-        MarkTypos(allTextNodes[i]);
+        var textNode = allTextNodes[i];
+
+        MarkTypos(textNode);
       }
     }
     function render() {
