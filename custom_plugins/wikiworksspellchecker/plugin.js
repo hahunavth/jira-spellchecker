@@ -232,6 +232,11 @@
       // }
       // return true;
     }
+
+    /**
+     * Mark typos in a text node
+     * @param {*} textNode: Text node here is corresponding to a line (not a word)
+     */
     function MarkTypos(textNode) {
       console.debug("MarkTypos", editor, textNode); // DEBUG
       var regex = wordTokenizer();
@@ -253,40 +258,38 @@
         // }
         var pos = match.index;
         var matchlength = matchtext.length;
-        var matchlength = matchtext.length;
         var newNode = currentNode.splitText(pos);
         var span = editor.getDoc().createElement("span");
         span.className = "nanospell-typo";
         span.setAttribute("data-mce-bogus", 1);
+
+        let middle = editor.getDoc().createTextNode(matchtext); // highlight typo word's text node
         span.addEventListener("click", function (event) {
           event.stopPropagation();
+          // NOTE: do not use reference from outer scope, it will be changed by the next iteration (var is hoisted to the top of the function)
           showPopup(
             editor,
             this,
-            textNode.nextElementSibling.innerHTML,
-            textNode
+            event.target.textContent,
+            middle
           );
         });
-
-        var middle = editor.getDoc().createTextNode(matchtext);
         span.appendChild(middle);
         currentNode.parentNode.insertBefore(span, newNode);
         newNode.data = newNode.data.substr(matchlength);
         currentNode = newNode;
-        newNodes.push(middle);
+        // newNodes.push(middle);
         newNodes.push(newNode);
         "".match(regex); /*the magic reset button*/
       }
     }
     var ignoredWords = [];
     function ignoreTypo(typoWord) {
-      var parentElement = typoWord.nextElementSibling;
+      var parentElement = typoWord.parentElement;
 
       if (parentElement) {
-        parentElement.classList.remove("nanospell-typo");
-
-        parentElement.removeAttribute("data-mce-bogus");
-        ignoredWords.push(typoWord.nextSibling.innerText);
+        parentElement.parentNode.replaceChild(typoWord, parentElement); // replace span with textnode in DOM tree
+        ignoredWords.push(typoWord.innerText);
       }
     }
     var currentPopup = null;
@@ -565,14 +568,13 @@
 
     function MarkAllTypos(body) {
       var allTextNodes = FindTextNodes(body);
+      console.log("all", allTextNodes)
       for (var i = 0; i < allTextNodes.length; i++) {
-        var textNode = allTextNodes[i];
-
+        var textNode = allTextNodes[i]; // NOTE: each item is a line
         MarkTypos(textNode);
       }
     }
     function render() {
-      console.debug("render"); // DEBUG
       if (!editor.selection.isCollapsed()) {
         return;
       }
@@ -588,17 +590,10 @@
       editor.nanospellstarted = true;
     }
     function start(editor) {
-      console.debug("start"); // DEBUG
       started = true;
       // appendCustomStyles()
       var words = getWords(editor); //(maxRequest);
-      console.debug("start", words); // DEBUG
-      // if (words.length == 0) {
       render();
-      // }
-      // else {
-      // defaultTinyMceSpellAJAXRequest("spellcheck", words, render, words.length >= maxRequest);
-      // }
     }
     function checkNow() {
       if (editor.selection.isCollapsed() && started) {
@@ -754,17 +749,17 @@
     editor.on("click", function (e) {
       console.debug("Event: contextmenu", e); // DEBUG
       if (e.target.className == "nanospell-typo") {
-        e.preventDefault();
-        e.stopPropagation();
-        var rng = editor.dom.createRng();
-        rng.setStart(e.target.firstChild, 0);
-        rng.setEnd(e.target.lastChild, e.target.lastChild.length);
-        editor.selection.setRng(rng);
-        //   showSuggestionsMenu(e, e.target, rng.toString());
+        // e.preventDefault();
+        // e.stopPropagation();
+        // var rng = editor.dom.createRng();
+        // rng.setStart(e.target.firstChild, 0);
+        // rng.setEnd(e.target.lastChild, e.target.lastChild.length);
+        // editor.selection.setRng(rng);
+        // //   showSuggestionsMenu(e, e.target, rng.toString());
       } else {
-        if (editor.rendercontextmenu) {
-          editor.rendercontextmenu(e, false);
-        }
+        // if (editor.rendercontextmenu) {
+        //   editor.rendercontextmenu(e, false);
+        // }
       }
     });
 
