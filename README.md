@@ -13,3 +13,12 @@ httpserver
 ```
 - Then open http://0.0.0.0:8080
 - Set `Devtool > Networks > Disable cache`
+
+## Tasks
+
+- [x] ポップアップ：提案された単語の追加
+- [ ] ポップアップ：提案された単語の置き換え
+- [x] ポップアップ：「無視」ボタンの処理
+- [ ] 速度の最適化
+- [ ] Wikiworks統合
+- [ ] バグ修正とテスティング

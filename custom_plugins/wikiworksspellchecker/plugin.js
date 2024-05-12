@@ -69,7 +69,6 @@
   }
 
   var global$5 = tinymce.util.Tools.resolve("tinymce.PluginManager");
-  // var global$6 = tinymce.util.Tools.resolve('tinymce.ui.Menu');
 
   const register = (editor) => {
     var started = true; // TODO: Check if editor is started before [Register events]
@@ -125,13 +124,12 @@
     // ----------------------------------------------------------------
     // Editor utils (UI related)
     // ----------------------------------------------------------------
-    // TODO: getWords(editor)
+    // DONE: getWords(editor)
     // TODO: markTypo(editor, ..)
     // TODO: markAllTypos(editor, ..)
-    // TODO: clearMarks(editor, ..)
-    // TODO: showPopup(editor, ..)
-    // TODO: hidePopup(editor, ..)
-    // TODO: replaceSuggestion(editor, ..)
+    // DONE: showPopup(editor, element, wrongWord, textNode)
+    // DONE: ignoreTypo(typoWordNode)
+    // DONE: replaceTypo(typoWordNode, newWord)
 
     var __memtok = null;
     var __memtoks = null;
@@ -283,13 +281,33 @@
         "".match(regex); /*the magic reset button*/
       }
     }
-    var ignoredWords = [];
-    function ignoreTypo(typoWord) {
-      var parentElement = typoWord.parentElement;
 
+    // FIXME: Save to local storage instead of array
+    // Load ignored words and typo-js library at startup
+    // Use hashtable type for faster lookup
+    // Add check ignore words in isCorrectWord() function
+    var ignoredWords = [];
+    /**
+     * Replace span with text node and add word to ignoredWords
+     * @param {TextNode} typoWord Text node of a word to be ignored
+     */
+    function ignoreTypo(typoWordNode) {
+      let parentElement = typoWordNode.parentElement;
       if (parentElement) {
-        parentElement.parentNode.replaceChild(typoWord, parentElement); // replace span with textnode in DOM tree
-        ignoredWords.push(typoWord.innerText);
+        parentElement.parentNode.replaceChild(typoWordNode, parentElement); // replace span with textnode in DOM tree
+        ignoredWords.push(typoWordNode.innerText);
+      }
+    }
+    /**
+     * Replace textContent of textNode with newText and remove span wrapper
+     * @param {TextNode} typoWordNode Text node of a word to be replaced
+     * @param {string} newWord Text node of a new word
+     */
+    function replaceTypo(typoWordNode, newWord) {
+      let parentElement = typoWordNode.parentElement;
+      if (parentElement) {
+        typoWordNode.textContent = newWord;
+        parentElement.parentNode.replaceChild(typoWordNode, parentElement); // replace span with textnode in DOM tree
       }
     }
     var currentPopup = null;
@@ -305,9 +323,15 @@
 
       // Lấy kích thước và vị trí của phần tử span
       var rect = element.getBoundingClientRect();
+
+      // FIXME: It create new popup every time user click on typo word
+      // and only hide it when user click on close button.
+      // So we need to removing old popup and create new one every time
+      // and removing current popup when user click on close button
+      // FIXME: Close popup not only when user click on close button,
+      // but also when user click outside of popup, ...
       var popup = editor.getDoc().createElement("div");
       popup.classList.add("custom-popup");
-
       popup.style.top = rect.bottom + 175 + "px";
       popup.style.left = rect.left + "px";
 
@@ -325,8 +349,6 @@
               <b style="color: #333;">Did you mean:</b>
                   <span class='close-btn'>X<i class='fas fa-times'></i></span>
               </div>
-              
-                  
                   <div class='word-container'>
                       <span class='current-word'>${suggestedWords[index]}</span>
                   </div>
@@ -351,7 +373,6 @@
           .addEventListener("click", function () {
             popup.style.display = "none";
           });
-
         popup
           .querySelector(".navigation__next")
           .addEventListener("click", function () {
@@ -374,13 +395,18 @@
             ignoreTypo(textNode);
             popup.style.display = "none";
           });
+        popup
+          .querySelector(".confirmBtn")
+          .addEventListener("click", function () {
+            replaceTypo(textNode, suggestedWords[currentIndex]);
+            popup.style.display = "none";
+          })
       }
 
       popup.style.display = "block";
       currentPopup = popup;
       document.body.appendChild(popup);
     }
-
     const getWords = (editor) => {
       const max = 100;
 
@@ -564,8 +590,6 @@
         cursorPos.select();
       }
     }
-  
-
     function MarkAllTypos(body) {
       var allTextNodes = FindTextNodes(body);
       console.log("all", allTextNodes)
@@ -608,18 +632,6 @@
         spell_ticker = setTimeout(checkNow, immediate ? 50 : spell_delay);
       }
     }
-
-    // ----------------------------------------------------------------
-    // Event handlers (Use Spellcheck + Editor utils)
-    // ----------------------------------------------------------------
-    // TODO: checkWord
-    // TODO: onClickMarkedWord
-    // TODO: onReplacedWord
-    // TODO: onIgnoreSuggestion
-    // TODO: onChangeSuggestion
-    // TODO: onClosePopup
-    // TODO: onOpenPopup
-    // TODO: onWordUpdated
 
     // ----------------------------------------------------------------
     // Session events
@@ -769,9 +781,12 @@
 
     if (started) {
       editor.on("init", function () {
-        // TODO: Spell check first time
         console.debug("Editor init"); // DEBUG
-        // checkNow(); 	// FIXME: dictionary is null
+        // TODO: Spell check first time
+        // FIXME: dictionary is null because it is not loaded yet
+        // To make it work first time, we need to wait for dictionary to be loaded
+        // Change the checkNow() function to make it do spell check asynchronously
+        // checkNow();
       });
     }
 
@@ -821,18 +836,18 @@
       setTimeout(triggerSpelling, 100);
     });
 
-    editor.on("remove", function () {
-      // TODO: Close popup if opened
-    });
+    // editor.on("remove", function () {
+    // TODO: Close popup if opened
+    // });
   };
 
   var Plugin = () => {
     // load context menu plugin
-    global$5.load(
-      "spellcontextmenu",
-      // nanospellbase() + "/os/contextmenu.js",
-      "custom_plugins/wikiworksspellchecker/os/contextmenu.js" // FIXME: hardcode path
-    );
+    // global$5.load(
+    //   "spellcontextmenu",
+    //   // nanospellbase() + "/os/contextmenu.js",
+    //   "custom_plugins/wikiworksspellchecker/os/contextmenu.js" // FIXME: hardcode path
+    // );
     // add plugin
     global$5.add("wikiworksspellchecker", (editor) => {
       // DONE: Setup plugin here!
