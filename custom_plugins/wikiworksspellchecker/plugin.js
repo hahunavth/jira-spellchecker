@@ -73,7 +73,32 @@
   const register = (editor) => {
     var started = true; // TODO: Check if editor is started before [Register events]
     var dictionary = null;
-    // var Menu = global$6;
+
+    var readyCallback = null;
+    var loadedStatus = new Proxy({
+      dictionary: false,
+      ignoreWords: false,
+    }, {
+      set: (target, prop, val) => {
+        target[prop] = val;
+        if (target.dictionary && target.ignoreWords) {
+          if (readyCallback) {
+            readyCallback();
+            readyCallback = null;
+          }
+        }
+        return true;
+      },
+      get: (target, prop) => {
+        if (target.dictionary && target.ignoreWords) {
+          if (readyCallback) {
+            readyCallback();
+            readyCallback = null;
+          }
+        }
+        return target[prop]
+      }
+    })
 
     // ----------------------------------------------------------------
     // Define settings
@@ -86,7 +111,10 @@
     // TODO: suggestWords(word)
     // TODO: ignoreWord(word)
 
-    // Load dictionary
+    var spellcheckCache = {}; // save result of isCorrectWord() function
+    var ignoredWordMap = {}; // example: { 'mismismismist': true }
+
+    // Load dictionary and ignored words
     const script = document.createElement("script");
     script.src = "https://cdn.jsdelivr.net/npm/typo-js@1.2.4/typo.min.js";
     script.onload = function () {
@@ -100,14 +128,36 @@
       ]).then(([affData, dicData]) => {
         dictionary = new Typo("en_US", affData, dicData);
         dictionary.alphabet = "abcdefghijklmnopqrstuvwxyz"; // NOTE: hotfix case suggest 'mismismismist' (ist -> 1st)
-        console.debug("Dictionary loaded!", dictionary); // DEBUG
+        loadedStatus.dictionary = true; // loaded
       });
+      if (typeof(Storage) !== "undefined") {
+        var savedIgnoredWordsStr = localStorage.getItem("ignoredWordMap")
+        if (savedIgnoredWordsStr) {
+          var parsedIgnoredWords = JSON.parse(savedIgnoredWordsStr);
+          if (parsedIgnoredWords instanceof Object && !Array.isArray(parsedIgnoredWords)) {
+            ignoredWordMap = parsedIgnoredWords;
+          } else {
+            console.warn("Wrong format of ignored words, ignored words will not be loaded.");
+          }
+        }
+        console.log("Loaded ignored words: ", ignoredWordMap);
+      } else {
+        console.warn("Browser does not support local storage, spellcheck ignored words will not be saved.");
+      }
+      loadedStatus.ignoreWords = true; // loaded
     };
     document.head.insertBefore(script, document.head.firstChild);
 
     const isCorrectWord = (word) => {
-      // TODO: cache
-      return dictionary.check(word);
+      if (word in ignoredWordMap) {
+        return false;
+      }
+      if (word in spellcheckCache) {
+        return spellcheckCache[word];
+      }
+      const isCorrect = dictionary.check(word);
+      spellcheckCache[word] = isCorrect;
+      return isCorrect;
     };
 
     const suggestWords = (word) => {
@@ -118,7 +168,8 @@
     };
 
     const ignoreWord = (word) => {
-      // TODO: cache
+      ignoredWordMap[word] = true;
+      localStorage.setItem("ignoredWordMap", JSON.stringify(ignoredWordMap));
     };
 
     // ----------------------------------------------------------------
@@ -248,9 +299,9 @@
         if (!validWordToken(matchtext)) {
           continue;
         }
-        if (ignoredWords.includes(matchtext)) {
+        if (ignoredWordMap[matchtext]) {
           continue;
-      }
+        }
         // if (typeof(suggestionscache[cleanQuotes(matchtext)]) !== 'object') {
         //     continue;
         // }
@@ -282,20 +333,16 @@
       }
     }
 
-    // FIXME: Save to local storage instead of array
-    // Load ignored words and typo-js library at startup
-    // Use hashtable type for faster lookup
-    // Add check ignore words in isCorrectWord() function
-    var ignoredWords = [];
     /**
      * Replace span with text node and add word to ignoredWords
      * @param {TextNode} typoWord Text node of a word to be ignored
      */
     function ignoreTypo(typoWordNode) {
+      // FIXME: ignore does not remove underline of other node with same word
       let parentElement = typoWordNode.parentElement;
       if (parentElement) {
+        ignoreWord(typoWordNode.textContent);
         parentElement.parentNode.replaceChild(typoWordNode, parentElement); // replace span with textnode in DOM tree
-        ignoredWords.push(typoWordNode.innerText);
       }
     }
     /**
@@ -310,26 +357,17 @@
         parentElement.parentNode.replaceChild(typoWordNode, parentElement); // replace span with textnode in DOM tree
       }
     }
-    var currentPopup = null;
 
+    var currentPopup = null; // Current popup element
     function showPopup(editor, element, wrongWord, textNode) {
       // Lấy danh sách các từ gợi ý
-      console.log(wrongWord);
       var suggestedWords = suggestWords(wrongWord);
 
-      if (currentPopup) {
-        currentPopup.style.display = "none";
-      }
+      removePopupIfOpen();
 
       // Lấy kích thước và vị trí của phần tử span
       var rect = element.getBoundingClientRect();
 
-      // FIXME: It create new popup every time user click on typo word
-      // and only hide it when user click on close button.
-      // So we need to removing old popup and create new one every time
-      // and removing current popup when user click on close button
-      // FIXME: Close popup not only when user click on close button,
-      // but also when user click outside of popup, ...
       var popup = editor.getDoc().createElement("div");
       popup.classList.add("custom-popup");
       popup.style.top = rect.bottom + 175 + "px";
@@ -371,7 +409,7 @@
         popup
           .querySelector(".close-btn")
           .addEventListener("click", function () {
-            popup.style.display = "none";
+            removePopupIfOpen();
           });
         popup
           .querySelector(".navigation__next")
@@ -393,13 +431,13 @@
           .querySelector(".ignoreBtn")
           .addEventListener("click", function () {
             ignoreTypo(textNode);
-            popup.style.display = "none";
+            removePopupIfOpen();
           });
         popup
           .querySelector(".confirmBtn")
           .addEventListener("click", function () {
             replaceTypo(textNode, suggestedWords[currentIndex]);
-            popup.style.display = "none";
+            removePopupIfOpen();
           })
       }
 
@@ -407,6 +445,13 @@
       currentPopup = popup;
       document.body.appendChild(popup);
     }
+    function removePopupIfOpen() {
+      if (currentPopup) {
+        currentPopup.remove();
+        currentPopup = null;
+      }
+    }
+
     const getWords = (editor) => {
       const max = 100;
 
@@ -651,127 +696,15 @@
     addEventHandler(document.body, "click", handleBlur);
     var handleBlur = function () {
       editorHasFocus = false;
-      // TODO: Close popup if opened
-      console.debug("Event: blur"); // DEBUG
+      // FIXME: when clicking on popup, it should not remove the popup
+      // removePopupIfOpen();
     };
     editor.on("blur", handleBlur);
 
-    function generateMemuItem(suggestion) {
-      return {
-        text: suggestion,
-        disabled: false,
-        onclick: function () {
-          placeSuggestion(suggestion);
-        },
-      };
-    }
-    function getMenuItemsArray(target, word) {
-      var items = [];
-      var suggestions = getSuggestions(word);
-      if (!suggestions) {
-        suggestions = [];
-      }
-      for (var i = 0; i < suggestions.length; i++) {
-        var suggestion = suggestions[i] + "";
-        if (suggestion.replace(/^\s+|\s+$/g, "").length < 1) {
-          continue;
-        }
-        items.push(generateMemuItem(suggestion));
-      }
-      if (!items.length) {
-        items.push({
-          text: "(No Spelling Suggestions)",
-          disabled: true,
-        });
-      }
-      if (
-        suggestions &&
-        suggestions.length == 2 &&
-        suggestions[0].indexOf(String.fromCharCode(160)) > -1
-      ) {
-        /**/
-      } else {
-        items.push({
-          text: "-",
-        });
-        items.push({
-          text: "Ignore",
-          onclick: function () {
-            ignoreWord(target, word, true);
-          },
-        });
-        items.push({
-          text: "Add to personal dictionary",
-          onclick: function () {
-            addPersonal(word);
-            ignoreWord(target, word, true);
-          },
-        });
-      }
-      return items;
-    }
-    //   function showSuggestionsMenu(e, target, word) {
-    // 	var items = getMenuItemsArray(target, word);
-    // 	if (editor.plugins.contextmenu) {
-    // 	  editor.rendercontextmenu(e, items);
-    // 	  return;
-    // 	}
-    // 	var suggestionsMenu = new Menu({
-    // 	  items: items,
-    // 	  context: "contextmenu",
-    // 	  onautohide: function (e) {
-    // 		if (e.target.className !== "nanospell-typo") {
-    // 		  e.preventDefault();
-    // 		}
-    // 	  },
-    // 	  onhide: function () {
-    // 		suggestionsMenu.remove();
-    // 		suggestionsMenu = null;
-    // 	  },
-    // 	});
-    // 	suggestionsMenu.renderTo(document.body);
-    // 	var pos = DOMUtils.DOM.getPos(editor.getContentAreaContainer());
-    // 	var targetPos = editor.dom.getPos(target);
-    // 	var doc = editor.getDoc().documentElement;
-    // 	if (editor.inline) {
-    // 	  pos.x += targetPos.x;
-    // 	  pos.y += targetPos.y;
-    // 	} else {
-    // 	  var scroll_left =
-    // 		(editor.getWin().pageXOffset || doc.scrollLeft) -
-    // 		(doc.clientLeft || 0);
-    // 	  var scroll_top =
-    // 		(editor.getWin().pageYOffset || doc.scrollTop) - (doc.clientTop || 0);
-    // 	  pos.x += targetPos.x - scroll_left;
-    // 	  pos.y += targetPos.y - scroll_top;
-    // 	}
-    // 	suggestionsMenu.moveTo(pos.x, pos.y + target.offsetHeight);
-    //   }
-    function getSuggestions(word) {
-      word = cleanQuotes(word);
-      if (suggestionscache[word] && suggestionscache[word][0]) {
-        if (suggestionscache[word][0].indexOf("*") == 0) {
-          return ["a"];
-          // return Array("nanospell\xA0plugin\xA0developer\xA0trial ", "tinymcespellcheck.com/license\xA0")
-        }
-      }
-      return ["a"];
-      // return suggestionscache[word];
-    }
     editor.on("click", function (e) {
       console.debug("Event: contextmenu", e); // DEBUG
       if (e.target.className == "nanospell-typo") {
-        // e.preventDefault();
-        // e.stopPropagation();
-        // var rng = editor.dom.createRng();
-        // rng.setStart(e.target.firstChild, 0);
-        // rng.setEnd(e.target.lastChild, e.target.lastChild.length);
-        // editor.selection.setRng(rng);
-        // //   showSuggestionsMenu(e, e.target, rng.toString());
       } else {
-        // if (editor.rendercontextmenu) {
-        //   editor.rendercontextmenu(e, false);
-        // }
       }
     });
 
@@ -781,12 +714,9 @@
 
     if (started) {
       editor.on("init", function () {
-        console.debug("Editor init"); // DEBUG
-        // TODO: Spell check first time
-        // FIXME: dictionary is null because it is not loaded yet
-        // To make it work first time, we need to wait for dictionary to be loaded
-        // Change the checkNow() function to make it do spell check asynchronously
-        // checkNow();
+        // Spell check first time
+        readyCallback = () => triggerSpelling(editor, true);
+        loadedStatus.dictionary; // trigger get
       });
     }
 
