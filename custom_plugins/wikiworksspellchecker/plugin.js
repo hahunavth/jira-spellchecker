@@ -75,30 +75,33 @@
     var dictionary = null;
 
     var readyCallback = null;
-    var loadedStatus = new Proxy({
-      dictionary: false,
-      ignoreWords: false,
-    }, {
-      set: (target, prop, val) => {
-        target[prop] = val;
-        if (target.dictionary && target.ignoreWords) {
-          if (readyCallback) {
-            readyCallback();
-            readyCallback = null;
-          }
-        }
-        return true;
+    var loadedStatus = new Proxy(
+      {
+        dictionary: false,
+        ignoreWords: false,
       },
-      get: (target, prop) => {
-        if (target.dictionary && target.ignoreWords) {
-          if (readyCallback) {
-            readyCallback();
-            readyCallback = null;
+      {
+        set: (target, prop, val) => {
+          target[prop] = val;
+          if (target.dictionary && target.ignoreWords) {
+            if (readyCallback) {
+              readyCallback();
+              readyCallback = null;
+            }
           }
-        }
-        return target[prop]
+          return true;
+        },
+        get: (target, prop) => {
+          if (target.dictionary && target.ignoreWords) {
+            if (readyCallback) {
+              readyCallback();
+              readyCallback = null;
+            }
+          }
+          return target[prop];
+        },
       }
-    })
+    );
 
     // ----------------------------------------------------------------
     // Define settings
@@ -130,19 +133,26 @@
         dictionary.alphabet = "abcdefghijklmnopqrstuvwxyz"; // NOTE: hotfix case suggest 'mismismismist' (ist -> 1st)
         loadedStatus.dictionary = true; // loaded
       });
-      if (typeof(Storage) !== "undefined") {
-        var savedIgnoredWordsStr = localStorage.getItem("ignoredWordMap")
+      if (typeof Storage !== "undefined") {
+        var savedIgnoredWordsStr = localStorage.getItem("ignoredWordMap");
         if (savedIgnoredWordsStr) {
           var parsedIgnoredWords = JSON.parse(savedIgnoredWordsStr);
-          if (parsedIgnoredWords instanceof Object && !Array.isArray(parsedIgnoredWords)) {
+          if (
+            parsedIgnoredWords instanceof Object &&
+            !Array.isArray(parsedIgnoredWords)
+          ) {
             ignoredWordMap = parsedIgnoredWords;
           } else {
-            console.warn("Wrong format of ignored words, ignored words will not be loaded.");
+            console.warn(
+              "Wrong format of ignored words, ignored words will not be loaded."
+            );
           }
         }
         console.log("Loaded ignored words: ", ignoredWordMap);
       } else {
-        console.warn("Browser does not support local storage, spellcheck ignored words will not be saved.");
+        console.warn(
+          "Browser does not support local storage, spellcheck ignored words will not be saved."
+        );
       }
       loadedStatus.ignoreWords = true; // loaded
     };
@@ -316,12 +326,7 @@
         span.addEventListener("click", function (event) {
           event.stopPropagation();
           // NOTE: do not use reference from outer scope, it will be changed by the next iteration (var is hoisted to the top of the function)
-          showPopup(
-            editor,
-            this,
-            event.target.textContent,
-            middle
-          );
+          showPopup(editor, this, event.target.textContent, middle);
         });
         span.appendChild(middle);
         currentNode.parentNode.insertBefore(span, newNode);
@@ -372,16 +377,47 @@
       popup.classList.add("custom-popup");
       popup.style.top = rect.bottom + 175 + "px";
       popup.style.left = rect.left + "px";
+      // Kiểm tra nếu suggestedWords không xác định hoặc rỗng
+      if (!suggestedWords || suggestedWords.length === 0) {
+        popup.innerHTML = `
+      <div class="popup-content">
+          <div class="popup-header">
+              <b style="color: #333;">No suggestions available</b>
+              <span class='close-btn'>X<i class='fas fa-times'></i></span>
+          </div>
+          <div class='popup-control'>
+              <button class='confirmBtn'>OK</button>
+          </div>
+      </div>`;
 
-      // Hiển thị từ đầu tiên
-      var currentIndex = 0;
-      showWordAtIndex(currentIndex);
+        popup
+          .querySelector(".close-btn")
+          .addEventListener("click", function () {
+            removePopupIfOpen();
+          });
+        popup
+          .querySelector(".confirmBtn")
+          .addEventListener("click", function () {
+            ignoreTypo(textNode);
+            removePopupIfOpen();
+          });
 
-      function showWordAtIndex(index) {
-        // Xóa nội dung cũ của popup
-        popup.innerHTML = "";
+        popup.style.display = "block";
+        currentPopup = popup;
+        document.body.appendChild(popup);
 
-        var popupContent = `
+        // Add event listener to close the popup when clicking outside of it
+        document.addEventListener("click", closePopupOnClickOutside);
+      } else {
+        // Hiển thị từ đầu tiên
+        var currentIndex = 0;
+        showWordAtIndex(currentIndex);
+
+        function showWordAtIndex(index) {
+          // Xóa nội dung cũ của popup
+          popup.innerHTML = "";
+
+          var popupContent = `
               <div class="popup-content">
               <div class="popup-header">
               <b style="color: #333;">Did you mean:</b>
@@ -394,8 +430,8 @@
                       <div class='popup--control__left'>
                         <span class='navigation__pre' ><</span>
                         <span class ='navigation__index' >${index + 1} / ${
-          suggestedWords.length
-        }</span>
+            suggestedWords.length
+          }</span>
                         <span class='navigation__next' >></span>     
                       </div>
                       <div class='popup--control__right'>
@@ -404,46 +440,47 @@
                       </div>
                   </div>
               </div>`;
-        popup.innerHTML = popupContent;
+          popup.innerHTML = popupContent;
 
-        popup
-          .querySelector(".close-btn")
-          .addEventListener("click", function () {
-            removePopupIfOpen();
-          });
-        popup
-          .querySelector(".navigation__next")
-          .addEventListener("click", function () {
-            if (currentIndex < suggestedWords.length - 1) {
-              currentIndex++;
-              showWordAtIndex(currentIndex);
-            }
-          });
-        popup
-          .querySelector(".navigation__pre")
-          .addEventListener("click", function () {
-            if (currentIndex > 0) {
-              currentIndex--;
-              showWordAtIndex(currentIndex);
-            }
-          });
-        popup
-          .querySelector(".ignoreBtn")
-          .addEventListener("click", function () {
-            ignoreTypo(textNode);
-            removePopupIfOpen();
-          });
-        popup
-          .querySelector(".confirmBtn")
-          .addEventListener("click", function () {
-            replaceTypo(textNode, suggestedWords[currentIndex]);
-            removePopupIfOpen();
-          })
+          popup
+            .querySelector(".close-btn")
+            .addEventListener("click", function () {
+              removePopupIfOpen();
+            });
+          popup
+            .querySelector(".navigation__next")
+            .addEventListener("click", function () {
+              if (currentIndex < suggestedWords.length - 1) {
+                currentIndex++;
+                showWordAtIndex(currentIndex);
+              }
+            });
+          popup
+            .querySelector(".navigation__pre")
+            .addEventListener("click", function () {
+              if (currentIndex > 0) {
+                currentIndex--;
+                showWordAtIndex(currentIndex);
+              }
+            });
+          popup
+            .querySelector(".ignoreBtn")
+            .addEventListener("click", function () {
+              ignoreTypo(textNode);
+              removePopupIfOpen();
+            });
+          popup
+            .querySelector(".confirmBtn")
+            .addEventListener("click", function () {
+              replaceTypo(textNode, suggestedWords[currentIndex]);
+              removePopupIfOpen();
+            });
+        }
+
+        popup.style.display = "block";
+        currentPopup = popup;
+        document.body.appendChild(popup);
       }
-
-      popup.style.display = "block";
-      currentPopup = popup;
-      document.body.appendChild(popup);
     }
     function removePopupIfOpen() {
       if (currentPopup) {
@@ -637,7 +674,7 @@
     }
     function MarkAllTypos(body) {
       var allTextNodes = FindTextNodes(body);
-      console.log("all", allTextNodes)
+      console.log("all", allTextNodes);
       for (var i = 0; i < allTextNodes.length; i++) {
         var textNode = allTextNodes[i]; // NOTE: each item is a line
         MarkTypos(textNode);
@@ -702,6 +739,7 @@
     editor.on("blur", handleBlur);
 
     editor.on("click", function (e) {
+      removePopupIfOpen();
       console.debug("Event: contextmenu", e); // DEBUG
       if (e.target.className == "nanospell-typo") {
       } else {
