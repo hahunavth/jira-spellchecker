@@ -6,14 +6,17 @@
   <script src="./custom_plugins/wikiworksspellchecker/plugin.js"></script>
   <link rel="stylesheet" href="./custom_plugins/wikiworksspellchecker/underline.css">
 
-<script type="text/javascript">
+  <script type="text/javascript">
     tinymce.init({
       selector: '#mytextarea',
       license_key: 'gpl',
-      plugins: 'wordcount wikiworksspellchecker',
+      plugins: 'wordcount wikiworksspellchecker lists',
       contextmenu: "wikiworksspellchecker",
       content_css: ['./custom_plugins/wikiworksspellchecker/underline.css'],
       toolbar: 'undo redo | formatselect | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | spellcheck_btn',
+      formats: {
+        orderedlist: { selector: "ol" }
+      }
     });
   </script>
 </head>
