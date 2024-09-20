@@ -9,14 +9,11 @@
 <script type="text/javascript">
     tinymce.init({
       selector: '#mytextarea',
+      license_key: 'gpl',
       plugins: 'wordcount wikiworksspellchecker',
       contextmenu: "wikiworksspellchecker",
-      license_key: 'gpl',
       content_css: ['./custom_plugins/wikiworksspellchecker/underline.css'],
-      
-      // toolbar: 'wordcount'
-      // plugins: 'tinymcespellchecker',
-      // spellchecker_language: 'en'
+      toolbar: 'undo redo | formatselect | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | spellcheck_btn',
     });
   </script>
 </head>

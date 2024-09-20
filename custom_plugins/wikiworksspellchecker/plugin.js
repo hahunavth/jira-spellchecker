@@ -71,6 +71,7 @@
   var global$5 = tinymce.util.Tools.resolve("tinymce.PluginManager");
 
   const register = (editor) => {
+    // ----------------------------------------------------------------
     var started = true; // TODO: Check if editor is started before [Register events]
     var dictionary = null;
 
@@ -219,14 +220,14 @@
         editor.getParam("spellchecker_wordchar_pattern") ||
         new RegExp(
           "(" +
-            email +
-            ")|(" +
-            protocol +
-            ")|(" +
-            domain +
-            ")|(" +
-            validword +
-            ")",
+          email +
+          ")|(" +
+          protocol +
+          ")|(" +
+          domain +
+          ")|(" +
+          validword +
+          ")",
           singleton ? "" : "g"
         );
       if (singleton) {
@@ -407,7 +408,7 @@
         document.body.appendChild(popup);
 
         // Add event listener to close the popup when clicking outside of it
-        document.addEventListener("click", closePopupOnClickOutside);
+        // document.addEventListener("click", closePopupOnClickOutside);
       } else {
         // Hiển thị từ đầu tiên
         var currentIndex = 0;
@@ -429,9 +430,8 @@
                   <div class='popup-control' >
                       <div class='popup--control__left'>
                         <span class='navigation__pre' ><</span>
-                        <span class ='navigation__index' >${index + 1} / ${
-            suggestedWords.length
-          }</span>
+                        <span class ='navigation__index' >${index + 1} / ${suggestedWords.length
+            }</span>
                         <span class='navigation__next' >></span>     
                       </div>
                       <div class='popup--control__right'>
@@ -752,61 +752,105 @@
 
     if (started) {
       editor.on("init", function () {
-        // Spell check first time
-        readyCallback = () => triggerSpelling(editor, true);
+        // // Spell check first time
+        // readyCallback = () => triggerSpelling(editor, true);
         loadedStatus.dictionary; // trigger get
       });
     }
 
+    // ----------------------------------------------------------------
+    // Spell check button
+    // NOTE: add `toolbar: 'spellcheck_btn'` when init editor
+    let spellcheckBtnText = "Spellcheck";
+    let spellcheckEvent = null; // TODO: Refactor bad pattern
+    const onSpellcheck = (e) => {
+      spellcheckBtnText = 'Checking...';
+      spellcheckEvent = e;
+      spellcheckEvent.setText(spellcheckBtnText);
+
+      setTimeout(triggerSpelling, 100);
+    }
+    const onDisableSpellcheck = () => {
+      if (!spellcheckEvent) return;
+
+      spellcheckBtnText = 'Spellcheck';
+      spellcheckEvent.setText(spellcheckBtnText);
+      spellcheckEvent = null;
+
+      clearAllSpellCheckingSpans(editor.getBody());
+      removePopupIfOpen();
+    }
+    editor.ui.registry.addButton('spellcheck_btn', {
+      text: spellcheckBtnText,         // Label for the button
+      icon: "",              // Set icon if needed (use true or specify an icon name)
+      onAction: function (e) {
+        // // DEBUG
+        // window.e = e;
+
+        if (spellcheckBtnText === 'Spellcheck') {
+          onSpellcheck(e);
+        } else {
+          onDisableSpellcheck();
+        }
+      }
+    });
+    // // DEBUG
+    // let spellcheckBtn = editor.ui.registry.getAll().buttons['spellcheck_btn']
+    // window.spellcheckBtn = spellcheckBtn;
+
     editor.on("keydown keypress", function (e) {
-      // var content = editor.getContent();
-      // console.debug(content); // DEBUG
-      /**
-       * TODO: Handle key
-       * - Set editorFocus control flag
-       * - Recheck typing activity
-       *      var target = editor.selection.getNode();
-       * - Ignore navigation keys
-       *      var ch8r = e.keyCode;
-       *      ( if chBr in [16, 31], [37, 40] -> ignore )
-       * - If user is typing on a typo remove its underline
-       * - Trigger spellcheck if key is end word (enter, space, ...)
-       */
+      // Reset spellcheck button
+      onDisableSpellcheck();
 
-      editorHasFocus = true;
+      // // var content = editor.getContent();
+      // // console.debug(content); // DEBUG
+      // /**
+      //  * TODO: Handle key
+      //  * - Set editorFocus control flag
+      //  * - Recheck typing activity
+      //  *      var target = editor.selection.getNode();
+      //  * - Ignore navigation keys
+      //  *      var ch8r = e.keyCode;
+      //  *      ( if chBr in [16, 31], [37, 40] -> ignore )
+      //  * - If user is typing on a typo remove its underline
+      //  * - Trigger spellcheck if key is end word (enter, space, ...)
+      //  */
 
-      //recheck after typing activity
-      var target = editor.selection.getNode();
+      // editorHasFocus = true;
 
-      // ignore navigation keys
-      var ch8r = e.keyCode;
-      if (ch8r >= 16 && ch8r <= 31) {
-        return;
-      }
-      if (ch8r >= 37 && ch8r <= 40) {
-        return;
-      }
-      //if user is typing on a typo remove its underline
-      if (target.className == "nanospell-typo") {
-        target.className = "nanospell-typo-disabled";
-      }
+      // //recheck after typing activity
+      // var target = editor.selection.getNode();
 
-      triggerSpelling(
-        editor,
-        // (spell_fast_after_spacebar &&
-        ch8r === 32 || ch8r === 10 || ch8r === 13
-        // )
-      );
+      // // ignore navigation keys
+      // var ch8r = e.keyCode;
+      // if (ch8r >= 16 && ch8r <= 31) {
+      //   return;
+      // }
+      // if (ch8r >= 37 && ch8r <= 40) {
+      //   return;
+      // }
+      // //if user is typing on a typo remove its underline
+      // if (target.className == "nanospell-typo") {
+      //   target.className = "nanospell-typo-disabled";
+      // }
+
+      // triggerSpelling(
+      //   editor,
+      //   // (spell_fast_after_spacebar &&
+      //   ch8r === 32 || ch8r === 10 || ch8r === 13
+      //   // )
+      // );
     });
 
     editor.on("paste", function () {
       // DONE: Trigger spellcheck asynchronously
-      setTimeout(triggerSpelling, 100);
+      // setTimeout(triggerSpelling, 100);
     });
 
     // editor.on("remove", function () {
     // TODO: Close popup if opened
     // });
+
   };
 
   var Plugin = () => {
