@@ -5296,45 +5296,48 @@
                             <body>
                               <h1>Spell check plugin test</h1>
                               <p id="spell-check-content">
-                                Complete these tasks to get started. This is a simple text for spell check exmple
-                                Some wrds might be misspelled.
+                                
                               </p>
-                              <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptatibus eaque tempore quasi! Nesciunt vel velit facere vitae!</p>
+                              
                               <div id=notification>
                                 <span id=notification-text>vcvcvcvcvcv</span>
                                 <span class=close-btn onclick=document.getElementById("notification").style.display="none">&times;</span>
 
                             </div>
                            
-                              <script type="module">
-                               
-                                var dictionary = new Typo("en_US", false, false, { dictionaryPath: "/node_modules/typo-js/dictionaries" });
-                        
-                              
-                                const contentElement = document.getElementById("spell-check-content");
-                                const content = contentElement.innerText;
-                                const words = content.split(/(\s+|\b)/); 
-                                let errorCount = 0;
-                                const highlightedContent = words.map(word => {
-                                    const strippedWord = word.replace(/[.,!?]/g, ""); 
-
-                                    if (strippedWord && !dictionary.check(strippedWord)) {
+                            <script type="module">
+                              function loadContent() {
+                                  const content = localStorage.getItem("previewContent");
+                                  document.getElementById("spell-check-content").innerHTML = content; 
+                              } 
+                              loadContent();
+                      
+                              const dictionary = new Typo("en_US", false, false, { dictionaryPath: "/node_modules/typo-js/dictionaries" });
+                      
+                              const contentElement = document.getElementById("spell-check-content");
+                              const words = contentElement.innerText.split(/(\s+|\b)/); 
+                              let errorCount = 0;
+                      
+                              const highlightedContent = words.map(word => {
+                                  const strippedWord = word.replace(/[.,!?]/g, ""); 
+                      
+                                  if (strippedWord && !dictionary.check(strippedWord)) {
                                       errorCount++; 
-                                        return `<span class="highlighted-text">${word}</span>`; 
-                                    }
-                                    return word; 
-                                }).join("");
-                        
-                                contentElement.innerHTML = highlightedContent;
-
-                                const notification = document.getElementById("notification");
-                                const notificationText = document.getElementById("notification-text");
-                                if (errorCount > 0) {
-                                    notificationText.innerText = `There are ${errorCount} spelling errors in the text.`;
-                                } 
-                                notification.style.display = "flex"; 
-                        
-                            </script>
+                                      return `<span class="highlighted-text">${word}</span>`; 
+                                  }
+                                  return word; 
+                              }).join("");
+                      
+                               contentElement.innerHTML = highlightedContent; 
+                      
+                              const notification = document.getElementById("notification");
+                              const notificationText = document.getElementById("notification-text");
+                      
+                              if (errorCount > 0) {
+                                  notificationText.innerText = `There are ${errorCount} spelling errors in the text.`;
+                                  notification.style.display = "flex"; 
+                              }
+                          </script>
                               
                             </body>
                           </html>'>
@@ -5359,7 +5362,7 @@
                         class="minor-edit toolbar-item" style=display:none></span></div>
                     <div class=aui-buttons><span id=rte-spinner class=toolbar-item>&nbsp;</span></div>
                     <div class="aui-buttons toolbar-group-edit"><button id=rte-button-edit class=aui-button type=button
-                        resolved data-tooltip="Return To edit Mode (e)" fdprocessedid=ume8h><span
+                        resolved data-tooltip="Return To edit Mode (e)" fdprocessedid=ume8h onclick="window.history.back()"><span
                           class=trigger-text>Edit</span></button></div>
                     <div
                       class="aui-buttons toolbar-group-preview toolbar-group-preview-page toolbar-group-preview-non-shared-draft assistive"
@@ -5398,8 +5401,3 @@
 
     </div>
   </div>
- 
-
- 
-  <!-- <script
-    data-template-shadow-root>(() => { document.currentScript.remove(); processNode(document); function processNode(node) { node.querySelectorAll("template[shadowrootmode]").forEach(element => { let shadowRoot = element.parentElement.shadowRoot; if (!shadowRoot) { try { shadowRoot = element.parentElement.attachShadow({ mode: element.getAttribute("shadowrootmode"), delegatesFocus: element.getAttribute("shadowrootdelegatesfocus") != null, clonable: element.getAttribute("shadowrootclonable") != null, serializable: element.getAttribute("shadowrootserializable") != null }); shadowRoot.innerHTML = element.innerHTML; element.remove() } catch (error) { } if (shadowRoot) { processNode(shadowRoot) } } }) } })()</script> -->

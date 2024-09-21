@@ -23,6 +23,11 @@
         orderedlist: { selector: "ol" }
       }
     });
+    function saveContent() {
+        const content = tinymce.get('mytextarea').getContent(); // Lấy nội dung từ TinyMCE
+        localStorage.setItem('previewContent', content); // Lưu vào localStorage
+        window.location.href = './preview_screen.html'; // Điều hướng sang trang preview
+      }
   </script>
 </head>
 
@@ -34,7 +39,7 @@
     <form method="post">
       <textarea id="mytextarea">Hello, World!</textarea>
     </form>
-    <button><a href="./preview_screen.html">Preview</a></button>
+    <button onclick="saveContent()">Preview</button>
     <h2>Debug</h2>
     <button onclick="localStorage.clear()">Clear local storage</button>
   </body>
