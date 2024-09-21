@@ -24,9 +24,12 @@
       }
     });
     function saveContent() {
-        const content = tinymce.get('mytextarea').getContent(); // Lấy nội dung từ TinyMCE
-        localStorage.setItem('previewContent', content); // Lưu vào localStorage
-        window.location.href = './preview_screen.html'; // Điều hướng sang trang preview
+
+        const content = tinymce.get('mytextarea').getContent(); 
+        localStorage.setItem('previewContent', content); 
+        window.location.href = './preview_screen.html'; 
+
+
       }
   </script>
 </head>
