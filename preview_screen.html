@@ -5296,10 +5296,9 @@
                             <body>
                               <h1>Spell check plugin test</h1>
                               <p id="spell-check-content">
-                                Complete these tasks to get started. This is a simple text for spell check exmple
-                                Some wrds might be misspelled.
+                                
                               </p>
-                              <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptatibus eaque tempore quasi! Nesciunt vel velit facere vitae!</p>
+                              
                               <div id=notification>
                                 <span id=notification-text>vcvcvcvcvcv</span>
                                 <span class=close-btn onclick=document.getElementById("notification").style.display="none">&times;</span>
@@ -5307,7 +5306,13 @@
                             </div>
                            
                               <script type="module">
-                               
+                                function loadContent() {
+                                  const content = localStorage.getItem("previewContent");
+                                  console.log(content);
+                                  document.getElementById("spell-check-content").innerHTML = content; 
+                                } 
+                                loadContent();
+
                                 var dictionary = new Typo("en_US", false, false, { dictionaryPath: "/node_modules/typo-js/dictionaries" });
                         
                               
@@ -5359,7 +5364,7 @@
                         class="minor-edit toolbar-item" style=display:none></span></div>
                     <div class=aui-buttons><span id=rte-spinner class=toolbar-item>&nbsp;</span></div>
                     <div class="aui-buttons toolbar-group-edit"><button id=rte-button-edit class=aui-button type=button
-                        resolved data-tooltip="Return To edit Mode (e)" fdprocessedid=ume8h><span
+                        resolved data-tooltip="Return To edit Mode (e)" fdprocessedid=ume8h onclick="window.history.back()"><span
                           class=trigger-text>Edit</span></button></div>
                     <div
                       class="aui-buttons toolbar-group-preview toolbar-group-preview-page toolbar-group-preview-non-shared-draft assistive"
