@@ -24,9 +24,15 @@
       }
     });
     function saveContent() {
+<<<<<<< HEAD
         const content = tinymce.get('mytextarea').getContent(); 
         localStorage.setItem('previewContent', content); 
         window.location.href = './preview_screen.html'; 
+=======
+        const content = tinymce.get('mytextarea').getContent(); // Lấy nội dung từ TinyMCE
+        localStorage.setItem('previewContent', content); // Lưu vào localStorage
+        window.location.href = './preview_screen.html'; // Điều hướng sang trang preview
+>>>>>>> 5c8fe5069599a4c2cec0f6d0df1c92db69ef9393
       }
   </script>
 </head>
